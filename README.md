@@ -9,3 +9,6 @@ python3 main.py
 ```
 
 For details of how to use this tool, please use "help" command directly in the command line.
+
+2024.11.25 -
+Add word class.

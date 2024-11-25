@@ -5,8 +5,8 @@ def load_words():
     words = []
     with open("documents/words.txt", "r") as f:
         for word in f.readlines():
-            voc, meaning, weight = word.split('_')
-            words.append({"voc": voc, "meaning": meaning, "weight": int(weight[:-1])})
+            voc, meaning, weight, _class = word.split('_')
+            words.append({"voc": voc, "meaning": meaning, "weight": int(weight), "class": _class[:-1]})
     return words
 
 """
@@ -17,7 +17,7 @@ def update_words(words: list):
     with open("documents/words.txt", "w") as f:
         for word in words:
             try:
-                f.write(f"{word["voc"]}_{word["meaning"]}_{word["weight"]}\n")
+                f.write(f"{word["voc"]}_{word["meaning"]}_{word["weight"]}_{word["class"]}\n")
             except:
                 continue
 

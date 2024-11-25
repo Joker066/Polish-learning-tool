@@ -48,6 +48,22 @@ def weighted_sample(words, k):
     weighted_words = sorted(words, key=lambda x: x["weight"], reverse=True)
     return weighted_words[:k]
 
+def load_COMMANDS():
+    global COMMANDS, voc_list, meaning_list
+    voc_list = [word["voc"] for word in load_words()]
+    meaning_list = [word["meaning"] for word in load_words()]
+    COMMANDS = {
+        "new": ["-b"],
+        "list": ["-s"],
+        "correct": voc_list,  
+        "find": voc_list + meaning_list,  
+        "practice": [],
+        "analyze": [],
+        "help": [],
+        "exit": [],
+        "save": []
+    }
+
 voc_list = []
 meaning_list = []
 COMMANDS = {}
@@ -90,18 +106,7 @@ def ctrl_l_handler():
 
 readline.parse_and_bind('"control-l": clear-screen')
 
-def load_COMMANDS():
-    global COMMANDS, voc_list, meaning_list
-    voc_list = [word["voc"] for word in load_words()]
-    meaning_list = [word["meaning"] for word in load_words()]
-    COMMANDS = {
-        "new": ["-b"],
-        "list": ["-s"],
-        "correct": voc_list,  
-        "find": voc_list + meaning_list,  
-        "practice": [],
-        "analyze": [],
-        "help": [],
-        "exit": [],
-        "save": []
-    }
+def classify(words, word, _class):
+    for i in range(len(words)):
+        if words[i] == word:
+            words[i]["class"] = _class
