@@ -158,7 +158,7 @@ def show_help():
     Available Commands:
     - new [-b]              Add a new word; use '-b' for batch mode.
     - practice <n>          Start a practice session, n is the number of questions.
-    - list [-s] <-class>    List all words; use '-s' for summary only; specify the class with -class(e.g. -n)
+    - list [-s] <-class>    List all words; use '-s' for summary only; specify the class with '-class'(e.g. -n)
     - correct <word>        Correct an existing word.
     - find <word>           Find and display a word.
     - analyze               Show previous practice records.
