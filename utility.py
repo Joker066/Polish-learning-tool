@@ -38,20 +38,20 @@ def check_meaning(words: list, meaning: str):
 Update the weight of a word accorrding to the practice result.
 It's an inner function, which means it cannot be accessed by the user.
 """
-def update_weight(words, word, correct: bool):
+def update_weight(words: list, word: dict, correct: bool):
     for i in range(len(words)):
         if words[i] == word:
             words[i]["weight"] = max(1, words[i]["weight"] - 2) if correct else words[i]["weight"] + 3
 
-def weighted_sample(words, k):
+def weighted_sample(words: list, k):
     shuffle(words)
     weighted_words = sorted(words, key=lambda x: x["weight"], reverse=True)
     return weighted_words[:k]
 
-def load_COMMANDS():
+def load_COMMANDS(words: list):
     global COMMANDS, voc_list, meaning_list
-    voc_list = [word["voc"] for word in load_words()]
-    meaning_list = [word["meaning"] for word in load_words()]
+    voc_list = [word["voc"] for word in words]
+    meaning_list = [word["meaning"] for word in words]
     COMMANDS = {
         "new": ["-b"],
         "list": ["-s"],
@@ -106,7 +106,7 @@ def ctrl_l_handler():
 
 readline.parse_and_bind('"control-l": clear-screen')
 
-def classify(words, word, _class):
+def classify(words: list, word: dict, _class: str):
     for i in range(len(words)):
         if words[i] == word:
             words[i]["class"] = _class

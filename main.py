@@ -5,7 +5,7 @@ from utility import *
 if __name__== "__main__":
     words = load_words()
     records = load_records()
-    load_COMMANDS()
+    load_COMMANDS(words)
     readline.set_auto_history(False)
     while True:
         command = input(">>> ").split()

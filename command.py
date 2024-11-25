@@ -31,7 +31,7 @@ def new_word(words: list, mode="n"):
             _class = safe_string(input("class: "))
             words.append({"voc": voc, "meaning": meaning, "weight": 10, "class": _class})
             print(f"new word {voc} is updated.")
-    load_COMMANDS()
+    load_COMMANDS(words)
 
 """
 Correct a word in the current word list, return error message if the word does not exist in the list.
@@ -45,7 +45,7 @@ def correct_word(words: list, voc: str):
         new_word(words)
     else:
         print(f"{voc} does not exist in the list, try \"new\".")
-    load_COMMANDS()
+    load_COMMANDS(words)
 
 """
 List all the words in the current word list.
@@ -135,6 +135,7 @@ def save(words: list, records: list):
     update_words(words)
     update_records(records)
     print("All words and records are up to date.")
+    load_COMMANDS(words)
     
 """
 Show the hint of every command.
