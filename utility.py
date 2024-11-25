@@ -30,7 +30,7 @@ It's an inner function, which means it cannot be accessed by the user.
 def check_meaning(words: list, meaning: str):
     candidates = []
     for word in words:
-        if meaning in word["meaning"]:
+        if meaning == word["meaning"] or ("/" + meaning) in word["meaning"] or (meaning + "/") in word["meaning"]:
             candidates.append(word)
     return candidates
 
