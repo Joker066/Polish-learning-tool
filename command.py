@@ -52,13 +52,26 @@ List all the words in the current word list.
 There are two modes, which can be inticated as the first argument in the command line.
 1. -n: Normal mode. Shows all words in the word list.
 2. -b: Size mode. Shows only the size of the word list.
+You can specify the words by their class, which can be indicated by the second argument.
+e.g.
+    -v for listing all verbs
+    -n for listing all nouns
+    -adj for listing all adjectives
+
 """
-def list_words(words: list, mode="n"):
+def list_words(words: list, mode="n", _class=None):
     if mode == "n":
         for word in words:
-            print(f"{word["voc"]} <{word["class"]}>: {word["meaning"]}")
+            if _class is None:  
+                print(f"{word["voc"]} <{word["class"]}>: {word["meaning"]}")
+            elif word["class"] == _class:
+                print(f"{word["voc"]} <{word["class"]}>: {word["meaning"]}")
+
     elif mode == "s":
-        print(f"number of all words: {len(words)}")
+        if _class is None:
+            print(f"number of all words: {len(words)}")
+        else:
+            print(f"number of all <{_class}>: {len([word for word in words if word["class"] == _class])}")
 
 """
 Practice.
@@ -145,7 +158,7 @@ def show_help():
     Available Commands:
     - new [-b]              Add a new word; use '-b' for batch mode.
     - practice <n>          Start a practice session, n is the number of questions.
-    - list [-s]             List all words; use '-s' for summary only.
+    - list [-s] <-class>    List all words; use '-s' for summary only; specify the class with -class(e.g. -n)
     - correct <word>        Correct an existing word.
     - find <word>           Find and display a word.
     - analyze               Show previous practice records.

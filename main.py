@@ -30,6 +30,10 @@ if __name__== "__main__":
                 list_words(words)
             elif len(command) == 2 and command[1] == "-s":
                 list_words(words, mode="s")
+            elif len(command) == 2 and command[1][1:] in {"n", "v", "adj", "adv", "pron"}:
+                list_words(words, _class=command[1][1:])
+            elif len(command) == 3 and command[1] == "-s" and command[2][1:] in {"n", "v", "adj", "adv", "pron"}:
+                list_words(words, mode="s", _class=command[2][1:])
             else:
                 print("wrong argument, try \"help\".")
         elif mode == "correct":
