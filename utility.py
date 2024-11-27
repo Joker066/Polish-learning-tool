@@ -5,7 +5,7 @@ from os import system, name
 
 from files import *
 
-printable = "abcdefghijklmnopqrstuvwxyząćęłńóśźżABCDEFGHIJKLMNOPQRSTUVWXYZĄĆĘŁŃÓŚŹŻ ()/-"
+printable = "abcdefghijklmnopqrstuvwxyząćęłńóśźżABCDEFGHIJKLMNOPQRSTUVWXYZĄĆĘŁŃÓŚŹŻ ()/,-0123456789"
 """
 Make sure that all the word does not contain nonprintable characters.
 """
@@ -54,14 +54,15 @@ def load_COMMANDS(words: list):
     meaning_list = [word["meaning"] for word in words]
     COMMANDS = {
         "new": ["-b"],
-        "list": ["-s"],
+        "list": ["-s", "-n", "-v", "-adj", "-adv", "-pron"],
         "correct": voc_list,  
         "find": voc_list + meaning_list,  
         "practice": [],
         "analyze": [],
         "help": [],
         "exit": [],
-        "save": []
+        "save": [],
+        "classify": []
     }
 
 voc_list = []
@@ -106,7 +107,11 @@ def ctrl_l_handler():
 
 readline.parse_and_bind('"control-l": clear-screen')
 
-def classify(words: list, word: dict, _class: str):
+def classify_word(words: list, word: dict):
     for i in range(len(words)):
         if words[i] == word:
+            _class = safe_string(input(f"classify {word["voc"]}: "))
+            if _class == "end":
+                return False
             words[i]["class"] = _class
+            return True

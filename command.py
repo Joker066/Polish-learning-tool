@@ -108,8 +108,6 @@ def practice(words: list, records: list, n=15):
                 wrong_words.append(f"{word["voc"]} means {word["meaning"]}")
         
         update_weight(words, word, correct)
-        if word["class"] == "unclassified":
-            classify(words, word, safe_string(input(f"please classify {word["voc"]}: ")))
     
         print(40 * "-")
 
@@ -167,4 +165,14 @@ def show_help():
     - exit                  Exit the application.
     """)
 
+"""
+Classify all unclassified words.
+"""
+def classify(words: list):
+    for word in words:
+        if word["class"] == "unclassified":
+            result = classify_word(words, word)
+            if not result:
+                break
+    update_words(words)
 

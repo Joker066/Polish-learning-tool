@@ -56,6 +56,8 @@ if __name__== "__main__":
             show_help()
         elif mode == "save":
             save(words, records)
+        elif mode == "classify":
+            classify(words)
         elif mode == "exit":
             break
         else:
