@@ -84,7 +84,7 @@ def practice(words: list, records: list, n=15):
         question = "voc" if randint(0, 1) else "meaning"
         correct = False
         if question == "voc":
-            answer = safe_string(input(f"meaning of {word["voc"]}:\n"))
+            answer = safe_string(input(f"meaning of {word["voc"]} <{word["class"]}>:\n"))
             if answer == "end":
                 return
             correct = len(answer) > 0 and answer in word["meaning"]
@@ -93,10 +93,10 @@ def practice(words: list, records: list, n=15):
                 accuracy += 1
             else:
                 print(f"\033[31mWrong, the answer is\033[0m \033[36m{word["meaning"]}\033[0m")
-                wrong_words.append(f"{word["voc"]} means {word["meaning"]}")
+                wrong_words.append(f"{word["voc"]} <{word["class"]}> means {word["meaning"]}")
             update_weight(words, word, correct)
         elif question == "meaning":
-            answer = safe_string(input(f"what voc stands for \"{word["meaning"]}\"?\n"))
+            answer = safe_string(input(f"what voc stands for \"{word["meaning"]} <{word["class"]}>\"?\n"))
             if answer == "end":
                 return
             correct = answer == word["voc"]
@@ -105,7 +105,7 @@ def practice(words: list, records: list, n=15):
                 accuracy += 1
             else:
                 print(f"\033[31mWrong, the answer is\033[0m \033[36m{word["voc"]}\033[0m")
-                wrong_words.append(f"{word["voc"]} means {word["meaning"]}")
+                wrong_words.append(f"{word["voc"]} <{word["class"]}> means {word["meaning"]}")
         
         update_weight(words, word, correct)
     
