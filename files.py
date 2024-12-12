@@ -1,5 +1,5 @@
 from utility import *
-from os import *
+from os import path, mkdir
 
 def load_words():
     """
