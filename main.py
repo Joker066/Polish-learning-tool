@@ -3,6 +3,8 @@ from files import *
 from utility import *
 
 if __name__== "__main__":
+    if not file_checks():
+        init()
     words = load_words()
     records = load_records()
     load_COMMANDS(words)
@@ -58,6 +60,8 @@ if __name__== "__main__":
             save(words, records)
         elif mode == "classify":
             classify(words)
+        elif mode == "init":
+            init()
         elif mode == "exit":
             break
         else:

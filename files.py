@@ -1,3 +1,4 @@
+from utility import *
 """
 Loads the word list from documents/words.txt
 """
@@ -48,3 +49,29 @@ def update_records(records: list):
             for word in record["wrong_words"]:
                 f.write(f"_{word}")
             f.write(f"_{record["timestamp"]}\n")
+
+def init():
+    words_path = "documents/words.txt"
+    records_path = "documents/records.txt"
+    if path.exists(words_path) and path.exists(records_path):
+        print("Environment has been initialized.")
+        return
+    
+    if not path.exists("./documents"):
+        print("creating /documents...")
+        mkdir("./documents")
+        print("/documents created")
+    if not path.exists(words_path):
+        print("creating /documents/words.txt...")
+        with open(words_path, "w"):
+            pass
+    if not path.exists(records_path):
+        with open(records_path, "w"):
+            pass
+    
+    print("Environment has been initialized.")
+
+def file_checks():
+    words_path = "documents/words.txt"
+    records_path = "documents/records.txt"
+    return path.exists(words_path) and path.exists(records_path)

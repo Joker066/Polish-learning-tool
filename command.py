@@ -175,4 +175,3 @@ def classify(words: list):
             if not result:
                 break
     update_words(words)
-
