@@ -12,3 +12,7 @@ For details of how to use this tool, please use "help" command directly in the c
 
 2024.11.25 -
 Add word class.
+
+2024.12.18 - 
+Add word classifying model.
+Add backend.
