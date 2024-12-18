@@ -1,12 +1,12 @@
 from utility import *
 from os import path, mkdir
 
-def load_words():
+def load_words(child=False):
     """
     Loads the word list from documents/words.txt
     """
     words = []
-    with open("documents/words.txt", "r") as f:
+    with open("../documents/words.txt" if child else "/documents/words.txt", "r") as f:
         for word in f.readlines():
             voc, meaning, weight, _class = word.split('_')
             words.append({"voc": voc, "meaning": meaning, "weight": int(weight), "class": _class[:-1]})
