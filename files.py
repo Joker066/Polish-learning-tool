@@ -1,12 +1,14 @@
-from utility import *
 from os import path, mkdir
+import csv
 
-def load_words(child=False):
+from utility import check_voc
+
+def load_words():
     """
     Loads the word list from documents/words.txt
     """
     words = []
-    with open("../documents/words.txt" if child else "/documents/words.txt", "r") as f:
+    with open("documents/words.txt", "r") as f:
         for word in f.readlines():
             voc, meaning, weight, _class = word.split('_')
             words.append({"voc": voc, "meaning": meaning, "weight": int(weight), "class": _class[:-1]})
@@ -80,3 +82,13 @@ def file_checks():
     words_path = "documents/words.txt"
     records_path = "documents/records.txt"
     return path.exists(words_path) and path.exists(records_path)
+
+def download_words_from_CSV():
+    words = load_words()
+    with open("Web/databases/words.csv", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if not check_voc(words, row["voc"]):
+                words.append({"voc": row["voc"], "meaning": row["meaning"], "weight": 10, "class": row["class"]})
+
+    update_words(words)
