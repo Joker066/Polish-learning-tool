@@ -16,3 +16,6 @@ Add word class.
 2024.12.18 - 
 Add word classifying model.
 Add backend.
+
+2025.02.21 -
+Add basic web structure.
