@@ -1,22 +1,9 @@
-import sqlite3, csv, os, sys
-
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(parent_dir)
-from files import *
-
-def word_to_CSV():
-    words = load_words(child=True)
-    with open("databases/words.csv", "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["voc", "meaning", "class"])
-        for word in words:
-            writer.writerow([word["voc"], word["meaning"], word["class"]])
+import sqlite3, csv
 
 def init_words_db():
     conn = sqlite3.connect("databases/words.db")
     cursor = conn.cursor()
-    cursor.execute("DROP TABLE IF EXISTS words")  # 刪除舊的表格
-    print("Dropping old table if it exists...")
+    cursor.execute("DROP TABLE IF EXISTS words")
     cursor.execute("""
         CREATE TABLE words (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,11 +12,9 @@ def init_words_db():
             class TEXT NOT NULL
         )
     """)
-    print("Creating new table...")
     conn.commit()
     conn.close()
-    print("Table created successfully.")
-
+    print("words.db created successfully.")
 
 def init_suggestions_db():
     conn = sqlite3.connect("databases/suggestions.db")
@@ -37,8 +22,7 @@ def init_suggestions_db():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS suggestions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            voc TEXT NOT NULL,
-            suggestion_type TEXT NOT NULL, -- 'add' or 'modify'
+            new_voc TEXT NOT NULL,
             new_meaning TEXT,
             new_class TEXT,
             status TEXT DEFAULT 'pending', -- pending, approved, rejected
@@ -48,16 +32,27 @@ def init_suggestions_db():
     """)
     conn.commit()
     conn.close()
+    print("suggestion.db created successfully.")
 
-def import_words_to_db():
-    csv_file = "databases/words.csv"
-    db_file = "databases/words.db"
+def init_users_db():
+    conn = sqlite3.connect("databases/users.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            role TEXT NOT NULL -- 'admin' or 'user'
+        )
+    """)
+    conn.commit()
+    conn.close()
+    print("users.db created successfully.")
 
-    # 連接 SQLite 資料庫
-    conn = sqlite3.connect(db_file)
+def import_CSV_to_db():
+    conn = sqlite3.connect("databases/words.db")
     cursor = conn.cursor()
 
-    # 檢查或建立表格
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS words (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,23 +62,22 @@ def import_words_to_db():
         )
     """)
 
-    with open(csv_file, "r", encoding="utf-8") as f:
+    with open("databases/words.csv", "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
             try:
-                print(f"Inserting word: {row['voc']}")  # Debug: print the word being inserted
                 cursor.execute("""
                     INSERT INTO words (voc, meaning, class)
                     VALUES (?, ?, ?)
                 """, (row["voc"], row["meaning"], row["class"]))
             except sqlite3.IntegrityError:
-                print(f"跳過重複的詞彙: {row['voc']}")
+                print(f"repeated: {row['voc']}")
 
     conn.commit()
     conn.close()
 
 if __name__ == "__main__":
     init_words_db()
+    import_CSV_to_db()
     init_suggestions_db()
-    word_to_CSV()
-    import_words_to_db()
+    init_users_db()

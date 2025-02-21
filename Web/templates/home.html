@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0-alpha1/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Welcome, {{ username }}!</h1>
+        <h3>Your Role: {{ role }}</h3>
+        
+        <div class="mt-4">
+            <h4>Choose an Option</h4>
+            <div class="list-group">
+                <!-- Display different buttons depending on the user role -->
+                {% if role == 'user' %}
+                    <a href="{{ url_for('words') }}" class="list-group-item list-group-item-action">View Words</a>
+                    <a href="{{ url_for('add_suggestion') }}" class="list-group-item list-group-item-action">Add New Word</a>
+                {% elif role == 'admin' %}
+                    <a href="{{ url_for('words') }}" class="list-group-item list-group-item-action">View Words</a>
+                    <a href="{{ url_for('add_suggestion') }}" class="list-group-item list-group-item-action">Add New Word</a>
+                    <a href="{{ url_for('suggestions') }}" class="list-group-item list-group-item-action">View Suggestions</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0-alpha1/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
