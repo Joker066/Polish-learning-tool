@@ -162,19 +162,13 @@ def show_help():
     - analyze               Show previous practice records.
     - help                  Display this help message.
     - save                  Save the words and records.
+    - download              Download the words from web server.
     - exit                  Exit the application.
     """)
 
-def classify(words: list):
-    """
-    Classify all unclassified words.
-    """
-    for word in words:
-        if word["class"] == "unclassified":
-            result = classify_word(words, word)
-            if not result:
-                break
-    update_words(words)
+"""
+Below are developing functions
+"""
 
 def grammar(words: list, voc: str):
     word = None
@@ -196,3 +190,6 @@ def grammar(words: list, voc: str):
             pass
         case _:
             print(f"Error occurred, please try correcting {voc}")
+
+def download(words: list):
+    words = words_from_CSV(words)

@@ -83,8 +83,7 @@ def file_checks():
     records_path = "documents/records.txt"
     return path.exists(words_path) and path.exists(records_path)
 
-def download_words_from_CSV():
-    words = load_words()
+def words_from_CSV(words: list):
     with open("Web/databases/words.csv", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:

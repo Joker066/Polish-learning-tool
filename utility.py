@@ -67,7 +67,8 @@ def load_COMMANDS(words: list):
         "help": [],
         "exit": [],
         "save": [],
-        "classify": []
+        "classify": [],
+        "download": []
     }
 
 voc_list = []
