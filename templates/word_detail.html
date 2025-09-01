@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}{{ word.voc }} · Detail{% endblock %}
+
+{% block content %}
+<div class="container-narrow">
+  <nav class="mb-3">
+    <a class="text-decoration-none"
+       href="{{ url_for('words', page=back_page, search=back_search) }}">
+      ← Back
+    </a>
+  </nav>
+
+  <!-- Header -->
+  <section class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+        <div>
+          <h1 class="h3 mb-1">{{ word.voc }}</h1>
+          <p class="mb-0 text-muted">{{ word.meaning }}</p>
+          <p class="mb-0 small text-muted">POS class: <code>{{ word.class }}</code></p>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          {% if word.class %}
+            <span class="badge text-bg-light border">{{ word.class|upper }}</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# --------- Noun forms (strict: only for class == 'n') --------- #}
+  {% if (word.class or '') == 'n' and forms_json %}
+  {% set sg = forms_json.get('sg') %}
+  {% set pl = forms_json.get('pl') %}
+  {% if sg or pl %}
+  <section class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-baseline flex-wrap gap-2">
+        <h2 class="h5 mb-0">Noun Cases</h2>
+        <div class="small text-muted">Common cases</div>
+      </div>
+
+      {# Your data uses UPPERCASE case keys #}
+      {% set case_order = [
+        ('Nominative',  'NOM'),
+        ('Genitive',    'GEN'),
+        ('Dative',      'DAT'),
+        ('Accusative',  'ACC'),
+        ('Instrumental','INST'),
+        ('Locative',    'LOC')
+      ] %}
+
+      <div class="table-responsive mt-3">
+        <table class="table table-sm align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 22%;">Case</th>
+              <th style="width: 39%;">Singular</th>
+              <th style="width: 39%;">Plural</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for label, key in case_order %}
+            <tr>
+              <td class="text-nowrap">{{ label }}</td>
+              <td class="font-monospace">{{ (sg[key] if sg and key in sg else '') }}</td>
+              <td class="font-monospace">{{ (pl[key] if pl and key in pl else '') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if forms_json.get('notes') %}
+        <div class="mt-3 small text-muted">{{ forms_json.get('notes') }}</div>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+  {% endif %}
+
+  {# --------- Adjective forms (strict: only for class == 'adj') --------- #}
+  {% if (word.class or '') == 'adj' and adj_forms_json %}
+  <section class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h2 class="h5 mb-3">Adjective Forms</h2>
+      {% if adj_forms_json is mapping %}
+        {% for group, entries in adj_forms_json.items() %}
+          <h6 class="mt-3 mb-2 text-muted">{{ group }}</h6>
+          <table class="table table-sm align-middle">
+            <tbody>
+              {% for k, v in entries.items() %}
+                {% if v is mapping %}
+                  <tr>
+                    <th class="w-25">{{ k }}</th>
+                    <td>
+                      <ul class="mb-0">
+                        {% for kk, vv in v.items() %}
+                          {% if vv is mapping %}
+                            <li><strong>{{ kk }}:</strong>
+                              <ul class="mb-0">
+                                {% for kkk, vvv in vv.items() %}
+                                  <li><strong>{{ kkk }}:</strong> {{ vvv }}</li>
+                                {% endfor %}
+                              </ul>
+                            </li>
+                          {% else %}
+                            <li><strong>{{ kk }}:</strong> {{ vv }}</li>
+                          {% endif %}
+                        {% endfor %}
+                      </ul>
+                    </td>
+                  </tr>
+                {% else %}
+                  <tr>
+                    <th class="w-25">{{ k }}</th>
+                    <td>{{ v }}</td>
+                  </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        {% endfor %}
+      {% else %}
+        <pre class="small mb-0">{{ adj_forms_json|tojson(indent=2) }}</pre>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

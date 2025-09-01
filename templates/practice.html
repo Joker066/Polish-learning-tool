@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+{% block title %}Practice{% endblock %}
+
+{% block content %}
+<div class="container-narrow">
+  <nav class="mb-3">
+    <a href="{{ url_for('words') }}" class="text-decoration-none">← Back to Words</a>
+  </nav>
+
+  <section class="card shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+        <h1 class="h5 mb-0">Practice</h1>
+        <div id="progressText" class="text-muted small">Loading…</div>
+      </div>
+
+      <div id="alertBox" class="alert alert-warning d-none" role="alert"></div>
+
+      <div id="quizPanel" class="d-none">
+        <div class="mb-2">
+          <span id="dirBadge" class="badge text-bg-secondary">—</span>
+        </div>
+
+        <div class="mb-3">
+          <div class="form-label text-muted small mb-1">Prompt</div>
+          <div id="promptText" class="fs-4 fw-semibold"></div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="answerInput">Your answer</label>
+          <input id="answerInput" type="text" class="form-control" autocomplete="off" spellcheck="false" />
+          <div id="hintText" class="form-text"></div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap mb-3">
+          <button id="submitBtn" class="btn btn-primary">Submit (Enter)</button>
+          <button id="showBtn" class="btn btn-outline-secondary">Show answer</button>
+          <button id="skipBtn" class="btn btn-outline-secondary">Skip</button>
+          <button id="nextBtn" class="btn btn-success d-none">Next (Enter)</button>
+        </div>
+
+        <div id="resultArea" class="mb-2 d-none">
+          <div id="resultBadge" class="badge"></div>
+          <div id="resultText" class="mt-2"></div>
+        </div>
+      </div>
+
+      <div id="summaryPanel" class="d-none">
+        <h2 class="h5">Batch summary</h2>
+        <p class="mb-1"><strong id="sumCorrect">0</strong> / <span id="sumTotal">0</span> correct</p>
+        <p class="text-muted" id="sumAccuracy">Accuracy: —</p>
+        <button id="newBatchBtn" class="btn btn-primary">Start a new batch</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script id="batch-data" type="application/json">
+  {{ (items or [])|tojson }}
+</script>
+
+<script>
+(function () {
+  // ----- Load batch from server-passed Jinja JSON -----
+  let raw = [];
+  try { raw = JSON.parse(document.getElementById('batch-data').textContent || '[]'); } catch (_) {}
+  // raw shape: {word_id, voc, meaning, class, direction: "vm"|"mv"}
+
+  let items = [];
+  if (Array.isArray(raw) && raw.length && 'word_id' in raw[0]) {
+    items = raw.map(r => {
+      const dir = r.direction === 'vm' ? 'v2m' : 'm2v';
+      const q = dir === 'v2m' ? r.voc : r.meaning;
+      const a = dir === 'v2m' ? r.meaning : r.voc;
+      return { word_id: r.word_id, dir, q, a, class: r.class };
+    });
+  }
+
+  const quizPanel   = document.getElementById('quizPanel');
+  const summaryPanel= document.getElementById('summaryPanel');
+  const alertBox    = document.getElementById('alertBox');
+  const progressText= document.getElementById('progressText');
+  const dirBadge    = document.getElementById('dirBadge');
+  const promptText  = document.getElementById('promptText');
+  const hintText    = document.getElementById('hintText');
+  const answerInput = document.getElementById('answerInput');
+  const submitBtn   = document.getElementById('submitBtn');
+  const showBtn     = document.getElementById('showBtn');
+  const skipBtn     = document.getElementById('skipBtn');
+  const nextBtn     = document.getElementById('nextBtn');
+  const resultArea  = document.getElementById('resultArea');
+  const resultBadge = document.getElementById('resultBadge');
+  const resultText  = document.getElementById('resultText');
+  const sumCorrect  = document.getElementById('sumCorrect');
+  const sumTotal    = document.getElementById('sumTotal');
+  const sumAccuracy = document.getElementById('sumAccuracy');
+  const newBatchBtn = document.getElementById('newBatchBtn');
+
+  let idx = 0;
+  let correctCount = 0;
+  let answered = false;
+
+  const showAlert = (msg, type = 'warning') => {
+    alertBox.className = `alert alert-${type}`;
+    alertBox.textContent = msg;
+    alertBox.classList.remove('d-none');
+  };
+  const hideAlert = () => alertBox.classList.add('d-none');
+
+  const diacriticsInsensitive = (s) =>
+    (s || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .replace(/[.,!?;:()[\]{}"']/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const parseAlternatives = (s) => (s || '').split(/\s*(?:,|;|\/| or )\s*/i).map(x => x.trim()).filter(Boolean);
+  const isCorrect = (userAns, expected) => {
+    const ua = diacriticsInsensitive(userAns);
+    const alts = parseAlternatives(expected).map(diacriticsInsensitive);
+    return alts.includes(ua);
+  };
+
+  const setDirBadge = (dir) => {
+    if (dir === 'v2m') {
+      dirBadge.textContent = 'VOC → MEANING';
+      hintText.textContent = 'Type the meaning in English (case-insensitive).';
+    } else {
+      dirBadge.textContent = 'MEANING → VOC';
+      hintText.textContent = 'Type the Polish word (diacritics tolerated).';
+    }
+    dirBadge.className = 'badge text-bg-secondary';
+  };
+
+  const setProgress = () => {
+    progressText.textContent = items.length
+      ? `Question ${Math.min(idx + 1, items.length)} of ${items.length}`
+      : '—';
+  };
+
+  const escapeHtml = (s) => { const d = document.createElement('div'); d.innerText = s ?? ''; return d.innerHTML; };
+
+  const renderItem = () => {
+    hideAlert();
+    resultArea.classList.add('d-none');
+    nextBtn.classList.add('d-none');
+    submitBtn.classList.remove('d-none');
+    answered = false;
+
+    const it = items[idx];
+    setDirBadge(it.dir);
+    promptText.textContent = it.q;
+    answerInput.value = '';
+    answerInput.placeholder = it.dir === 'v2m' ? 'Meaning…' : 'Word…';
+    answerInput.disabled = false;
+    answerInput.focus();
+    setProgress();
+  };
+
+  const showResult = (ok, expected, userAns) => {
+    resultArea.classList.remove('d-none');
+    resultBadge.className = 'badge ' + (ok ? 'text-bg-success' : 'text-bg-danger');
+    resultBadge.textContent = ok ? 'Correct' : 'Incorrect';
+    resultText.innerHTML = ok
+      ? `Nice!`
+      : `Expected: <strong>${escapeHtml(expected)}</strong><br/>Your answer: <span class="text-muted">${escapeHtml(userAns || '—')}</span>`;
+  };
+
+  const postAnswer = async (it, ok, userAns, revealed=false, skipped=false) => {
+    try {
+      await fetch("/practice/answer", {
+        method: "POST",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          word_id: it.word_id,
+          dir: it.dir,
+          is_correct: !!ok,
+          revealed: !!revealed,
+          skipped: !!skipped,
+          user_answer: userAns ?? ''
+        })
+      });
+    } catch (_) {}
+  };
+
+  const next = () => {
+    idx++;
+    if (idx >= items.length) {
+      quizPanel.classList.add('d-none');
+      summaryPanel.classList.remove('d-none');
+      sumCorrect.textContent = String(correctCount);
+      sumTotal.textContent = String(items.length);
+      const acc = items.length ? Math.round((100 * correctCount) / items.length) : 0;
+      sumAccuracy.textContent = `Accuracy: ${acc}%`;
+      progressText.textContent = 'Batch complete';
+      return;
+    }
+    renderItem();
+  };
+
+  submitBtn.addEventListener('click', async () => {
+    if (answered) return;
+    const it = items[idx];
+    const ans = answerInput.value.trim();
+    const ok = isCorrect(ans, it.a);
+    answered = true;
+    answerInput.disabled = true;
+    showResult(ok, it.a, ans);
+    submitBtn.classList.add('d-none');
+    nextBtn.classList.remove('d-none');
+    if (ok) correctCount++;
+    postAnswer(it, ok, ans, false, false);
+  });
+
+  showBtn.addEventListener('click', async () => {
+    if (answered) return;
+    const it = items[idx];
+    answered = true;
+    answerInput.disabled = true;
+    showResult(false, it.a, answerInput.value.trim());
+    submitBtn.classList.add('d-none');
+    nextBtn.classList.remove('d-none');
+    postAnswer(it, false, answerInput.value.trim(), true, false);
+  });
+
+  skipBtn.addEventListener('click', async () => {
+    if (answered) return;
+    const it = items[idx];
+    answered = true;
+    answerInput.disabled = true;
+    showResult(false, it.a, '');
+    submitBtn.classList.add('d-none');
+    nextBtn.classList.remove('d-none');
+    postAnswer(it, false, '', false, true);
+  });
+
+  nextBtn.addEventListener('click', next);
+
+  answerInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (!answered) submitBtn.click();
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && answered && !nextBtn.classList.contains('d-none')) {
+      e.preventDefault();
+      nextBtn.click();
+    }
+  });
+
+  newBatchBtn.addEventListener('click', () => window.location.reload());
+
+  if (!items.length) {
+    showAlert('No items. Import words and ensure they have both voc and meaning.', 'info');
+    progressText.textContent = 'No items';
+  } else {
+    quizPanel.classList.remove('d-none');
+    summaryPanel.classList.add('d-none');
+    idx = 0;
+    correctCount = 0;
+    renderItem();
+  }
+})();
+</script>
+{% endblock %}

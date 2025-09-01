@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Add Suggestion</h2>
+
+<form method="post">
+  <label>Word (voc)
+    <input id="voc" name="word" value="{{ pref_voc or '' }}" required>
+  </label><br>
+
+  <label>Meaning
+    <input name="meaning" value="{{ pref_mean or '' }}" required>
+  </label><br>
+
+  <!-- Class + Auto classify -->
+  <label>Class
+    <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+      <input name="class" id="classField" value="{{ pref_class or '' }}" placeholder="n/v/adj/adv/...">
+      <button type="button" id="btn-auto-classify">Auto classify</button>
+    </div>
+    <div id="classify-result" style="font-size: 0.9em; color: #666; margin-top:4px;"></div>
+  </label><br>
+
+  <!-- Noun cases -->
+  <label style="display:block; margin-top:8px;">
+    <input type="checkbox" id="include_forms" name="include_forms">
+    Include noun cases (sg / pl)
+  </label>
+  <div id="forms_box" style="display:none; margin-top:8px;">
+    <div style="display:flex; gap:24px; flex-wrap:wrap;">
+      <fieldset>
+        <legend>sg</legend>
+        {% for c in CASES %}
+          <label style="display:block; margin:4px 0;">
+            {{ c }} <input name="sg_{{ c }}">
+          </label>
+        {% endfor %}
+      </fieldset>
+      <fieldset>
+        <legend>pl</legend>
+        {% for c in CASES %}
+          <label style="display:block; margin:4px 0;">
+            {{ c }} <input name="pl_{{ c }}">
+          </label>
+        {% endfor %}
+      </fieldset>
+    </div>
+    <p><small>All 12 fields are required if included.</small></p>
+  </div>
+
+  <!-- Adjective cases (5 categories) -->
+  <label style="display:block; margin-top:8px;">
+    <input type="checkbox" id="include_adj" name="include_adj">
+    Include adjective cases (sg_m / sg_f / sg_n / pl_mo / pl_nmo)
+  </label>
+  <div id="adj_box" style="display:none; margin-top:8px;">
+    <div style="display:flex; gap:24px; flex-wrap:wrap;">
+      {% for num in ["sg_m","sg_f","sg_n","pl_mo","pl_nmo"] %}
+        <fieldset>
+          <legend>{{ num }}</legend>
+          {% for c in CASES %}
+            <label style="display:block; margin:4px 0;">
+              {{ c }} <input name="adj_{{ num }}_{{ c }}">
+            </label>
+          {% endfor %}
+        </fieldset>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Hidden telemetry & serialized forms -->
+  <input type="hidden" name="auto_filled" id="auto_filled" value="0">
+  <input type="hidden" name="confirmed"   id="confirmed"   value="0">
+  <input type="hidden" name="model_label" id="model_label" value="">
+  <input type="hidden" name="model_prob"  id="model_prob"  value="">
+  <input type="hidden" name="new_forms"   id="new_forms"   value="">
+  <input type="hidden" name="new_adj_forms" id="new_adj_forms" value="">
+
+  <button type="submit">Submit</button>
+</form>
+
+<script id="cases-data" type="application/json">{{ CASES | tojson }}</script>
+<script>
+  // Elements
+  const classField     = document.getElementById('classField');
+  const includeBox     = document.getElementById('include_forms');
+  const formsBox       = document.getElementById('forms_box');
+  const includeAdjBox  = document.getElementById('include_adj');
+  const adjBox         = document.getElementById('adj_box');
+
+  const btnAuto    = document.getElementById('btn-auto-classify');
+  const vocInput   = document.getElementById('voc');
+  const meaningEl  = document.querySelector('input[name="meaning"]');
+  const result     = document.getElementById('classify-result');
+
+  const autoFilledEl  = document.getElementById('auto_filled');
+  const confirmedEl   = document.getElementById('confirmed');
+  const modelLabelEl  = document.getElementById('model_label');
+  const modelProbEl   = document.getElementById('model_prob');
+  const newFormsEl    = document.getElementById('new_forms');
+  const newAdjFormsEl = document.getElementById('new_adj_forms');
+
+  const cases = JSON.parse(document.getElementById('cases-data').textContent);
+
+  // Visibility
+  function updateFormsVisibility() {
+    const isNoun = (classField.value || '').trim().toLowerCase() === 'n';
+    formsBox.style.display = includeBox.checked && isNoun ? 'block' : 'none';
+  }
+  function updateAdjVisibility() {
+    const isAdj = (classField.value || '').trim().toLowerCase() === 'adj';
+    adjBox.style.display = includeAdjBox.checked && isAdj ? 'block' : 'none';
+  }
+
+  classField.addEventListener('input', () => {
+    autoFilledEl.value = '0';
+    confirmedEl.value  = '0';
+    updateFormsVisibility();
+    updateAdjVisibility();
+  });
+  includeBox.addEventListener('change', updateFormsVisibility);
+  includeAdjBox.addEventListener('change', updateAdjVisibility);
+  updateFormsVisibility();
+  updateAdjVisibility();
+
+  // Serialize noun grid into JSON (UPPERCASE keys) for new_forms
+  function collectNounGrid() {
+    const out = { sg:{}, pl:{}, notes:'' };
+    for (const num of ['sg','pl']) {
+      for (const c of cases) {
+        const el = document.querySelector(`[name="${num}_${c}"]`);
+        if (el && el.value.trim()) out[num][c] = el.value.trim();
+      }
+    }
+    if (!Object.keys(out.sg).length && !Object.keys(out.pl).length && !out.notes) return '';
+    return JSON.stringify(out);
+  }
+
+  // Serialize adjective grid (5 categories) into JSON for new_adj_forms
+  function collectAdjGrid() {
+    const out = { notes:'' };
+    const nums = ["sg_m","sg_f","sg_n","pl_mo","pl_nmo"];
+    for (const num of nums) {
+      out[num] = {};
+      for (const c of cases) {
+        const el = document.querySelector(`[name="adj_${num}_${c}"]`);
+        if (el && el.value.trim()) out[num][c] = el.value.trim();
+      }
+      if (!Object.keys(out[num]).length) delete out[num];
+    }
+    if (Object.keys(out).length === 1) return ''; // only notes present (empty)
+    return JSON.stringify(out);
+  }
+
+  // Always ask user to confirm a model suggestion
+  async function classifyOnce() {
+    const voc = (vocInput?.value || '').trim();
+    const meaning = (meaningEl?.value || '').trim();
+    if (!voc) {
+      result.textContent = 'Please enter the word first.';
+      return null;
+    }
+    result.textContent = 'Classifying...';
+    try {
+      const url = '/classify?voc=' + encodeURIComponent(voc) + '&meaning=' + encodeURIComponent(meaning);
+      const resp = await fetch(url, { method: 'GET' });
+      const data = await resp.json();
+      if (!resp.ok) {
+        result.textContent = data?.error || 'Request failed';
+        return null;
+      }
+
+      const probs = data.probs || {};
+      const top3 = Object.entries(probs).sort((a,b) => b[1]-a[1]).slice(0,3);
+      const topStr = top3.map(([k,v]) => `${k}: ${(v*100).toFixed(1)}%`).join(' · ');
+
+      const ok = window.confirm(`Model suggests: ${data.label} (p=${(data.prob||0).toFixed(2)}). Use this class?`);
+      modelLabelEl.value = data.label || '';
+      modelProbEl.value  = String(data.prob || 0);
+
+      if (ok) {
+        classField.value   = data.label || '';
+        autoFilledEl.value = '1';
+        confirmedEl.value  = '1';
+      } else {
+        autoFilledEl.value = '0';
+        confirmedEl.value  = '0';
+      }
+
+      updateFormsVisibility();
+      updateAdjVisibility();
+      result.textContent = `Suggested: ${data.label}${topStr ? ' ('+ topStr +')' : ''}`;
+      return ok;
+    } catch {
+      result.textContent = 'Network error.';
+      return null;
+    }
+  }
+
+  // Auto classify button
+  if (btnAuto) {
+    if ((classField?.value || '').trim()) {
+      btnAuto.style.display = 'none';
+      if (result) result.style.display = 'none';
+    }
+    btnAuto.addEventListener('click', classifyOnce);
+  }
+
+  // Submit hook:
+  // - If class is empty, auto classify → confirm → then submit (server has fallback)
+  // - Always serialize both grids to hidden fields
+  const form = document.querySelector('form');
+  form.addEventListener('submit', async (e) => {
+    if (!classField.value.trim()) {
+      e.preventDefault();
+      await classifyOnce();
+      form.submit();
+      return;
+    }
+  });
+  form.addEventListener('submit', () => {
+    newFormsEl.value    = collectNounGrid() || '';
+    newAdjFormsEl.value = collectAdjGrid()  || '';
+  });
+</script>
+{% endblock %}

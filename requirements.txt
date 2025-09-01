@@ -1,0 +1,4 @@
+Flask>=2.3,<4
+Flask-Login>=0.6,<1
+gunicorn>=21,<22
+numpy>=1.26,<3

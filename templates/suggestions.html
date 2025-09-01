@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Suggestions</h2>
+
+<h3>Pending</h3>
+{% if pending %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Word</th>
+      <th>Meaning</th>
+      <th>Class</th>
+      <th>Submitted By</th>
+      <th>Created</th>
+      <th style="width:220px;">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in pending %}
+    <tr>
+      <td>#{{ s.id }}</td>
+      <td><strong>{{ s.new_voc }}</strong></td>
+      <td>{{ s.new_meaning }}</td>
+      <td>{{ s.new_class }}</td>
+      <td>{{ s.user_id }}</td>
+      <td>{{ s.created_at }}</td>
+      <td style="white-space:nowrap;">
+        <form method="post" action="{{ url_for('approve_suggestion', sugg_id=s.id) }}" style="display:inline;">
+          <!-- Optional JSON overrides for forms; leave empty unless you paste JSON -->
+          <input type="hidden" name="admin_forms" value="">
+          <input type="hidden" name="admin_adj_forms" value="">
+          <button type="submit">Approve</button>
+        </form>
+        <form method="post" action="{{ url_for('reject_suggestion', sid=s.id) }}" style="display:inline; margin-left:8px;">
+          <input type="text" name="reason" placeholder="Reason (optional)" style="width:140px;">
+          <button type="submit">Reject</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p><em>No pending suggestions.</em></p>
+{% endif %}
+
+<h3>Approved</h3>
+{% if approved %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Word</th>
+      <th>Meaning</th>
+      <th>Class</th>
+      <th>Reviewed By</th>
+      <th>Reviewed At</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in approved %}
+    <tr>
+      <td>#{{ s.id }}</td>
+      <td><strong>{{ s.new_voc }}</strong></td>
+      <td>{{ s.new_meaning }}</td>
+      <td>{{ s.new_class }}</td>
+      <td>{{ s.reviewed_by|default('—') }}</td>
+      <td>{{ s.reviewed_at|default('—') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p><em>No approved suggestions yet.</em></p>
+{% endif %}
+
+<h3>Rejected</h3>
+{% if rejected %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Word</th>
+      <th>Meaning</th>
+      <th>Class</th>
+      <th>Reason</th>
+      <th>Reviewed By</th>
+      <th>Reviewed At</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in rejected %}
+    <tr>
+      <td>#{{ s.id }}</td>
+      <td><strong>{{ s.new_voc }}</strong></td>
+      <td>{{ s.new_meaning }}</td>
+      <td>{{ s.new_class }}</td>
+      <td>{{ s.reason|default('—') }}</td>
+      <td>{{ s.reviewed_by|default('—') }}</td>
+      <td>{{ s.reviewed_at|default('—') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p><em>No rejected suggestions.</em></p>
+{% endif %}
+{% endblock %}

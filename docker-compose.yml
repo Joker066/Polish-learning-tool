@@ -1,0 +1,26 @@
+services:
+  web:
+    build: .
+    image: plt-polish-web:latest
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - TZ=Asia/Taipei
+    volumes:
+      - db:/app/databases
+      - data:/app/data
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on: [web]
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - db:/app/databases:ro
+      - data:/app/data:ro
+    restart: unless-stopped
+
+volumes:
+  db:
+  data:
