@@ -9,6 +9,10 @@ services:
       - db:/app/databases
       - data:/app/data
     restart: unless-stopped
+    command: >
+      gunicorn -w 2 -k gthread -t 120
+      --max-requests 1000 --max-requests-jitter 100
+      -b 0.0.0.0:8000 app:app
 
   nginx:
     image: nginx:1.27-alpine

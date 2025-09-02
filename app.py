@@ -346,13 +346,14 @@ def approve_suggestion(sugg_id: int):
         # UPSERT into words (preserves word ID if it already exists)
         conn.execute(
             """
-            INSERT INTO words (voc, meaning, class, forms, adj_forms)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO words (voc, meaning, class, forms, adj_forms, approved)
+            VALUES (?, ?, ?, ?, ?, 1)
             ON CONFLICT(voc) DO UPDATE SET
               meaning   = excluded.meaning,
               class     = excluded.class,
               forms     = excluded.forms,
-              adj_forms = excluded.adj_forms
+              adj_forms = excluded.adj_forms,
+              approved  = 1
             """,
             (voc, meaning or None, final_label, row["new_forms"], row["new_adj_forms"])
         )
