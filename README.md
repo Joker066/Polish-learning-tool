@@ -62,9 +62,8 @@
 ├── requirements.txt
 ├── scripts/
 │   ├── __init__.py
-│   ├── import.py                 # NEW: import JSON → DB (does NOT overwrite approved rows)
-│   ├── fetch.py                  # NEW: fetch DB → JSON (merges all rows; drops 'approved' flag)
-│   ├── import_words_json_to_appdb.py     # (legacy) can be replaced by scripts/import.py
+│   ├── import.py                 # import JSON → DB (does NOT overwrite approved rows)
+│   ├── fetch.py                  # fetch DB → JSON (merges all rows; drops 'approved' flag)
 │   ├── regenerate_words_json.py  # regenerate seed JSON from grammar rules (pre‑DB)
 │   └── retrain_pos.py
 └── templates/
